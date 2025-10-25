@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  name        String
+  phoneNumber String?
+  password    String
+  role        Role     @default(AUTHOR)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  Story       Story[]
+}
+
+model Story {
+  id          String     @id @default(uuid())
+  title       String
+  content     String
+  coverImage  String?
+  status      Status     @default(DRAFT)
+  visibility  Visibility @default(PUBLIC)
+  publishedAt DateTime?
+
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([authorId, status])
+}
+
+enum Role {
+  ADMIN // Full control
+  AUTHOR // Can write stories and poems
+  READER // Future use
+}
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum Status {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
