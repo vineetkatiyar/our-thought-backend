@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import process from 'process';
 import userRouter from './routes/user.routes.js';
+import storyRouter from './routes/story.routes.js';
 
 const app = express();
 dotenv.config();
@@ -23,6 +24,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/v1/user', userRouter);
+app.use('/api/v1/story', storyRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

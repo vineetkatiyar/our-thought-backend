@@ -21,19 +21,20 @@ model User {
 
 model Story {
   id          String     @id @default(uuid())
+  slug        String     @unique
   title       String
   content     String
   coverImage  String?
   status      Status     @default(DRAFT)
   visibility  Visibility @default(PUBLIC)
   publishedAt DateTime?
-
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([authorId, status])
+  @@index([authorId, status, slug])
+  @@unique([slug, authorId])
 }
 
 enum Role {
