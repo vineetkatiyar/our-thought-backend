@@ -21,12 +21,13 @@ const userController = {
       const data = loginUserSchema.parse(req.body);
       const { email, password } = data;
       const result = await userService.loginUser({ email, password });
-      res.status(200).json({ message: 'User logged in successfully', result });
+      res.status(200).json({ message: "User logged in successfully", result });
     } catch (error) {
-      console.log(error);
-      res.status(400).json({ message: error.message });
+      console.error("Controller error:", error.message);
+      res.status(400).json({ message: error.message || "Login failed" });
     }
-  },
+  }
+  
 };
 
 export default userController;

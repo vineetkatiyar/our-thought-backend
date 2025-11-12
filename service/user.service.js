@@ -34,25 +34,25 @@ const userService = {
   async loginUser({ email, password }) {
     try {
       const user = await prisma.user.findUnique({ where: { email } });
-
       if (!user) {
-        throw new Error('User not found');
+        throw new Error("User not found");
       }
-
+  
       const isPasswordValid = await bcrypt.compare(password, user.password);
-
       if (!isPasswordValid) {
-        throw new Error('Invalid password');
+        throw new Error("Invalid password");
       }
-
+  
       const userWithoutPassword = { ...user };
       delete userWithoutPassword.password;
-
+  
       const token = generateToken(user);
       return { user: userWithoutPassword, token };
     } catch (error) {
-      console.log(error);
+      console.log("Login Error:", error.message);
+      throw new Error(error.message || "Login failed");
     }
-  },
+  }
+  
 };
 export default userService;

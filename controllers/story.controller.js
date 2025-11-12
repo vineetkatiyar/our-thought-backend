@@ -70,8 +70,6 @@ const storyController = {
   async getAllStories(req, res) {
     try {
       const validatedQuery = getAllStoriesQuerySchema.parse(req.query);
-
-      console.log('📝 Admin fetching all stories with filters:', validatedQuery);
       const result = await storyService.getAllStories(validatedQuery);
       res.status(200).json({
         message: 'Stories fetched successfully',
@@ -82,7 +80,6 @@ const storyController = {
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        // Validation error response
         return res.status(400).json({
           message: 'Invalid query parameters',
           errors: error.errors,
