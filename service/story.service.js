@@ -60,14 +60,76 @@ const storyService = {
     }
   },
 
-  async getStoriesByAuthor(authorId) {
-    return await prisma.story.findMany({
-      where: { authorId },
-      include: {
-        author: { select: { id: true, name: true, email: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  async getStoriesByAuthor(authorId, validatedQuery) {
+    try {
+      const {
+        search,
+        status,
+        sortBy = 'createdAt',
+        sortByOrder = 'desc',
+        page = 1,
+        limit = 10,
+      } = validatedQuery;
+
+      let whereClause = { authorId };
+
+      if (search) {
+        whereClause.title = { contains: search, mode: 'insensitive' };
+      }
+
+      if (status) {
+        whereClause.status = status;
+      }
+
+      const totalCount = await prisma.story.count({ where: whereClause });
+
+      const {
+        skip,
+        limit: itemsPerPage,
+        page: currentPage,
+        totalPages,
+        hasPrevious,
+        hasNext,
+      } = paginate({ page, limit }, totalCount);
+
+      const stories = await prisma.story.findMany({
+        where: whereClause,
+        include: {
+          author: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+        orderBy: { [sortBy]: sortByOrder },
+        skip,
+        take: itemsPerPage,
+      });
+
+      return {
+        stories,
+        pagination: {
+          currentPage,
+          totalPages,
+          totalItems: totalCount,
+          itemsPerPage,
+          hasNext,
+          hasPrevious,
+        },
+        filters: {
+          search: search || '',
+          status: status || '',
+          authorId: authorId || '',
+          sortBy,
+          sortByOrder,
+        },
+      };
+    } catch (error) {
+      console.log('Error in storyService.getStoriesByAuthor:', error);
+      throw error;
+    }
   },
   async getAllStories(validatedQuery) {
     try {
@@ -188,6 +250,16 @@ const storyService = {
         throw new Error('Unauthorized to update this story');
       }
 
+      let publishedAtDate = null;
+
+      if (status === 'PUBLISHED') {
+        if (publishedAt && !isNaN(new Date(publishedAt).getTime())) {
+          publishedAtDate = new Date(publishedAt);
+        } else {
+          publishedAtDate = new Date();
+        }
+      }
+
       const updatedData = {
         title,
         slug,
@@ -195,7 +267,7 @@ const storyService = {
         coverImage,
         status,
         visibility,
-        publishedAt: status === 'PUBLISHED' ? new Date(publishedAt) : null,
+        publishedAt: publishedAtDate,
       };
 
       const updatedStory = await prisma.story.update({
@@ -211,11 +283,37 @@ const storyService = {
           },
         },
       });
-
-      console.log(`✅ Story updated successfully: ${updatedStory.title}`);
       return updatedStory;
     } catch (error) {
       console.log('Error in storyService.updateStory:', error);
+      throw error;
+    }
+  },
+  async toggleVisibility(storyId, userId) {
+    try {
+      const story = await prisma.story.findUnique({
+        where: { id: storyId },
+        select: { authorId: true, visibility: true },
+      });
+      if (!story) throw new Error('Story not found');
+      if (story.authorId !== userId) throw new Error('Unauthorized to update this story');
+      const updatedStory = await prisma.story.update({
+        where: { id: storyId },
+        data: { visibility: story.visibility === 'PRIVATE' ? 'PUBLIC' : 'PRIVATE' },
+        include: {
+          author: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      });
+
+      return updatedStory;
+    } catch (error) {
+      console.log('Error in storyService.toggleVisibility:', error);
       throw error;
     }
   },
@@ -234,10 +332,7 @@ const storyService = {
       };
 
       if (search) {
-        whereClause.OR = [
-          { title: { contains: search, mode: 'insensitive' } },
-          { content: { contains: search, mode: 'insensitive' } },
-        ];
+        whereClause.OR = [{ title: { contains: search, mode: 'insensitive' } }];
       }
 
       // TOTAL COUNT CHECK
@@ -301,7 +396,7 @@ const storyService = {
         },
       };
     } catch (error) {
-      console.log('❌ Error in storyService.getAllPublicStories:', error);
+      console.log('Error in storyService.getAllPublicStories:', error);
       throw error;
     }
   },
@@ -325,7 +420,7 @@ const storyService = {
       });
       return story;
     } catch (error) {
-      console.log('❌ Error in storyService.getPublicStoryBySlug:', error);
+      console.log('Error in storyService.getPublicStoryBySlug:', error);
       throw error;
     }
   },

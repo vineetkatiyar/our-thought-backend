@@ -35,24 +35,47 @@ const userService = {
     try {
       const user = await prisma.user.findUnique({ where: { email } });
       if (!user) {
-        throw new Error("User not found");
+        throw new Error('User not found');
       }
-  
+
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
-        throw new Error("Invalid password");
+        throw new Error('Invalid password');
       }
-  
+
       const userWithoutPassword = { ...user };
       delete userWithoutPassword.password;
-  
+
       const token = generateToken(user);
       return { user: userWithoutPassword, token };
     } catch (error) {
-      console.log("Login Error:", error.message);
-      throw new Error(error.message || "Login failed");
+      console.log('Login Error:', error.message);
+      throw new Error(error.message || 'Login failed');
     }
-  }
-  
+  },
+  async getCurrentUserById(userId) {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          status: true,
+          role: true,
+          visibility: true,
+          bio: true,
+          avatar: true,
+        },
+      });
+      if (!user) {
+        throw new Error('User not found');
+      }
+      return user;
+    } catch (error) {
+      console.log('Error fetching current user:', error);
+      throw error;
+    }
+  },
 };
 export default userService;

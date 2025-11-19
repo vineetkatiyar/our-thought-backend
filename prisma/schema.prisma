@@ -8,32 +8,42 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(uuid())
-  email       String   @unique
-  name        String
-  password    String
-  role        Role     @default(AUTHOR)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  Story       Story[]
+  id         String     @id @default(uuid())
+  email      String     @unique
+  name       String
+  password   String
+  status     UserStatus @default(ACTIVE)
+  visibility Visibility @default(PUBLIC)
+  bio        String?
+  avatar     String?
+  role       Role       @default(AUTHOR)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  Story      Story[]
+}
+
+enum UserStatus {
+  ACTIVE
+  BANNED
+  DEACTIVATED
 }
 
 model Story {
   id          String     @id @default(uuid())
   slug        String     @unique
   title       String
-  content     String
+  content     Json
   coverImage  String?
   status      Status     @default(DRAFT)
   visibility  Visibility @default(PUBLIC)
   publishedAt DateTime?
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  authorId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId    String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
-  @@index([authorId, status, slug])
   @@unique([slug, authorId])
+  @@index([authorId, status, slug])
 }
 
 enum Role {

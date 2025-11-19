@@ -11,8 +11,6 @@ const storyController = {
     try {
       const validatedData = createStorySchema.parse(req.body);
       const autherId = req.user.id;
-      console.log('Validated Data:', validatedData);
-      console.log('Author ID:', autherId);
       const story = await storyService.createStory(validatedData, autherId);
       res.status(201).json({
         message: 'Story created successfully',
@@ -54,12 +52,14 @@ const storyController = {
 
   async getStoriesByAuthor(req, res) {
     try {
+      const validatedQuery = getAllStoriesQuerySchema.parse(req.query);
       const authorId = req.user.id;
-      const stories = await storyService.getStoriesByAuthor(authorId);
-
+      const stories = await storyService.getStoriesByAuthor(authorId, validatedQuery);
       res.status(200).json({
         message: 'Stories fetched successfully',
-        stories,
+        stories: stories.stories,
+        pagination: stories.pagination,
+        filters: stories.filters,
         success: true,
       });
     } catch (error) {
@@ -143,10 +143,23 @@ const storyController = {
     }
   },
 
+  async updateStoryStatus(req, res) {
+    try {
+      const storyId = req.params.storyId;
+      const userId = req.user.id;
+      const updatedStory = await storyService.toggleVisibility(storyId, userId);
+      return res.status(200).json({
+        message: 'Story visibility updated successfully',
+        data: updatedStory,
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(400).json({ message: error.message });
+    }
+  },
+
   async getAllPublicStories(req, res) {
     try {
-      console.log('vineet');
-      console.log('Fetching public stories with query:', req.query);
       const result = await storyService.getAllPublicStories(req.query);
 
       res.status(200).json({

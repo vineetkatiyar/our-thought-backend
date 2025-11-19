@@ -5,6 +5,7 @@ import process from 'process';
 import userRouter from './routes/user.routes.js';
 import storyRouter from './routes/story.routes.js';
 import dashboardRouter from './routes/dashboard.routes.js';
+import userManagementRouter from './routes/userManagement.route.js';
 
 const app = express();
 dotenv.config();
@@ -12,7 +13,7 @@ const PORT = process.env.PORT || 5000;
 
 const corsOptions = {
   origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
@@ -27,6 +28,7 @@ app.get('/', (req, res) => {
 app.use('/api/v1/user', userRouter);
 app.use('/api/v1/story', storyRouter);
 app.use('/api/v1/dashboard', dashboardRouter);
+app.use('/api/v1/userManagement', userManagementRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

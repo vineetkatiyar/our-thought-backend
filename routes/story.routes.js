@@ -38,6 +38,15 @@ router.put(
   storyController.updateStory,
 );
 
+router.patch(
+  '/update/status/:storyId',
+  authenticateToken,
+  requireRole(['ADMIN', 'AUTHOR']),
+  storyController.updateStoryStatus,
+)
+
+
+// public api
 router.get('/public', storyController.getAllPublicStories);
 router.get('/:slug', storyController.getPublicStoryBySlug);
 
